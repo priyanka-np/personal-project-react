@@ -1,20 +1,15 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import Login from './Login';
 import Profile from './Profile';
+import { login, logout, setUsername, handleError, getEvents } from './store/actions';
 
-import "./App.css";
+import './App.css';
 
 class App extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { 
-      loggedIn: false,
-      username: "",
-      profile: {},
-      error: '',
-      forkEvents: [],
-      pullRequestEvents: []
-    };
+
+  handleInputChange = (e) => {
+    this.props.setUsername(e);
   }
 
   getEventsByType = (events, eventType) => {
@@ -22,64 +17,37 @@ class App extends React.Component {
     return events.filter(singleEvent => singleEvent.type === eventType);
   };
 
-  handleInputChange = (e) => {
-    this.setState({
-      [e.target.name]: e.target.value
-    });
-  }
-
   handleLogin = () => {
-    if(this.state.username) {
-      fetch(`https://api.github.com/users/${this.state.username}`)
-        .then(res => res.json())
-        .then(data => {
-          this.setState({ profile: data, loggedIn: true })
-        })
-        .catch(err => this.setState({ error: err.message }));
-    } else {
-      this.setState({
-        error: 'please enter the username'
-      });
+    this.props.login(this.props.username)
+    if(this.props.username) {
+      this.props.getEvents(this.props.username)
     }
   }
 
   handleLogOut = () => {
-    this.setState({ loggedIn: false, profile: {} });
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.loggedIn !== this.state.loggedIn) {
-      if (this.state.loggedIn) {
-        fetch(`https://api.github.com/users/${this.state.username}/events`)
-          .then(res => res.json())
-          .then(data => {
-            const forkEvents = this.getEventsByType(data, 'ForkEvent');
-            const pullRequestEvents = this.getEventsByType(data, 'PullRequestEvent');
-            this.setState({ forkEvents, pullRequestEvents })
-          })
-          .catch(err => this.setState({ error: err.message }));
-      }
-    }
+    this.props.logout();
   }
 
   render() {
-    const { name, forkEvents, pullRequestEvents } = this.state;
+    const { username, loggedIn, profile, error, events } = this.props;
+    const forkEvents = this.getEventsByType(events, 'ForkEvent');
+    const pullRequestEvents = this.getEventsByType(events, 'PullRequestEvent');
 
     return (
       <main className="App">
-        {this.state.loggedIn ? (
+        {loggedIn ? (
           <Profile
-            {...this.state.profile}
+            {...profile}
             handleLogOut={this.handleLogOut}
-            forkEvents={this.state.forkEvents}
-            pullRequestEvents={this.state.pullRequestEvents}
+            forkEvents={forkEvents}
+            pullRequestEvents={pullRequestEvents}
           />
         ) : (
           <Login
             handleInputChange={this.handleInputChange}
             handleLogin={this.handleLogin}
-            username={this.state.username}
-            error={this.state.error}
+            username={username}
+            error={error}
           />
         )}
       </main>
@@ -87,4 +55,23 @@ class App extends React.Component {
   }
 }
 
-export default App;
+const mapStateToProps = state => ({
+  loggedIn: state.loggedIn,
+  username: state.username,
+  profile: state.profile,
+  error: state.error,
+  events: state.events
+});
+
+const mapDispatchToProps = {
+  setUsername,
+  login,
+  handleError,
+  logout,
+  getEvents
+}
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(App);

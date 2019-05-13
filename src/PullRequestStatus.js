@@ -1,28 +1,37 @@
 import React from 'react';
+import { connect } from 'react-redux';
+import { getStatus } from './store/actions';
 
 class PullRequestStatus extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { status: {} };
-  }
-
   componentDidMount() {
-    fetch(this.props.url)
-      .then(res => res.json())
-      .then(status => this.setState({ status }));
+    this.props.getStatus(this.props.url);
   }
-
   render() {
+    if (this.props.status === undefined) {
+      return "";
+    }
+
     const {
       status: { merged, state }
-    } = this.state;
+    } = this.props;
 
-    return ( 
-      state === undefined 
-        ? ""
-        : <span className={state === "closed" ? (merged ? "merged" : "closed") : "open"} />
+    return (
+      <span
+        className={state === "closed" ? (merged ? "merged" : "closed") : "open"}
+      />
     );
   }
 }
 
-export default PullRequestStatus;
+const mapStateToProps = state => ({
+  status: state.status
+});
+
+const mapDispatchToProps = {
+  getStatus
+}
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(PullRequestStatus);
