@@ -1,10 +1,11 @@
 import React from 'react';
+import ErrorMessage from './ErrorMessage';
 
 const TextInput = (props) => {
-  const { value, handleChange, label, id, name } = props;
+  const { value, handleChange, label, id, name, error } = props;
   return (
     <React.Fragment>
-      <label for={id}>{label}</label>
+      <label htmlFor={id}>{label}</label>
       <input
         type="text"
         value={value}
@@ -12,6 +13,7 @@ const TextInput = (props) => {
         name={name}
         id={id}
       />
+      <ErrorMessage error={error} />
     </React.Fragment>
   );
 }
